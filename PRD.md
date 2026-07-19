@@ -17,24 +17,28 @@ Una aplicación web (PWA) donde los usuarios pueden:
 
 * Usuario Explorador: Persona interesada en arte urbano, fotografía o turismo local.
 * Usuario Colaborador: Persona que desea registrar y compartir murales encontrados en la ciudad.
+* Usuario Administrador: Persona responsable de moderar murales pendientes y reportados.
 
 ### 3. Alcance del MVP
 
 * Registro de murales.
 * Foto.
-* Geolocalización.
+* Geolocalización (GPS o coordenadas manuales).
 * Mapa de murales cercanos.
 * Lista de murales cercanos.
 * Visualización de detalle.
-* Autenticación de usuarios (usuario/contraseña y Google).
+* Registro y autenticación de usuarios (usuario/contraseña y Google, con vinculación automática por email), y reseteo de contraseña.
+* Cierre de sesión.
+* Gestión de murales propios: listado con estado y eliminación.
 * Manejo de casos límite: permisos de ubicación denegados, imágenes inválidas, fallos de guardado y ausencia de resultados cercanos.
 * **Moderación mínima de contenido:**
   * Estado "pendiente" para murales recién subidos, no visibles públicamente hasta ser aprobados o validados.
+  * Estado "rechazado" para murales bloqueados automáticamente (NSFW) o rechazados/despublicados por un administrador.
   * Reporte de murales por parte de los usuarios.
   * Validación automática básica para bloquear contenido NSFW antes de su publicación.
+  * Listado de murales pendientes y reportados para uso del administrador (sin panel de UI dedicado).
 
 ---
-
 
 ## Objetivos
 
@@ -54,11 +58,11 @@ El sistema debe permitir asociar la ubicación GPS actual al mural.
 
 ### RF-003 Registrar ubicación manual
 
-El sistema debe permitir ingresar una ubicación manualmente.
+El sistema debe permitir ingresar manualmente las coordenadas de ubicación (latitud/longitud).
 
 ### RF-004 Guardar mural
 
-El sistema debe almacenar fotografía, ubicación y fecha de creación.
+El sistema debe almacenar fotografía, ubicación, fecha de creación y estado inicial "pendiente".
 
 ### RF-005 Buscar murales cercanos
 
@@ -82,7 +86,7 @@ El sistema debe detectar cuándo el usuario no otorga permisos de geolocalizaci�
 
 ### RF-010 Rechazar imagen inválida
 
-El sistema debe rechazar imágenes que superen los 10 MB o tengan un formato no soportado.
+El sistema debe rechazar imágenes que superen los 10 MB o no estén en un formato soportado (JPEG, PNG o WebP).
 
 ### RF-011 Detectar fallo en el guardado
 
@@ -102,7 +106,7 @@ El sistema debe permitir a cualquier usuario reportar un mural publicado por con
 
 ### RF-015 Validación automática básica de contenido NSFW
 
-El sistema debe ejecutar una validación automática sobre cada imagen subida y bloquear su publicación si se detecta contenido NSFW.
+El sistema debe ejecutar una validación automática sobre cada imagen subida y cambiar el mural al estado "rechazado" si se detecta contenido NSFW, sin publicarlo.
 
 ### RF-016 Ofrecer ingreso manual de ubicación al denegar permisos
 
@@ -142,11 +146,67 @@ El sistema debe permitir al usuario reintentar el guardado del mural utilizando 
 
 ### RF-025 Aprobar mural pendiente
 
-El sistema debe permitir a un usuario administrador cambiar el estado de un mural de "pendiente" a "publicado" mediante un endpoint directo.
+El sistema debe permitir a un usuario administrador cambiar el estado de un mural de "pendiente" a "publicado".
 
 ### RF-026 Requerir autenticación para crear mural
 
 El sistema debe requerir que el usuario esté autenticado para acceder a la funcionalidad de creación de murales.
+
+### RF-027 Rechazar mural pendiente
+
+El sistema debe permitir a un usuario administrador cambiar el estado de un mural de "pendiente" a "rechazado".
+
+### RF-028 Despublicar mural reportado
+
+El sistema debe permitir a un usuario administrador cambiar el estado de un mural de "publicado" a "rechazado".
+
+### RF-029 Listar murales pendientes
+
+El sistema debe permitir a un usuario administrador obtener el listado de murales en estado "pendiente".
+
+### RF-030 Listar murales reportados
+
+El sistema debe permitir a un usuario administrador obtener el listado de murales publicados con al menos un reporte activo.
+
+### RF-031 Ver murales propios
+
+El sistema debe permitir a un usuario colaborador ver el listado de los murales que subió, incluyendo su estado actual (pendiente, publicado o rechazado).
+
+### RF-032 Eliminar mural propio
+
+El sistema debe permitir a un usuario colaborador eliminar un mural que él mismo subió.
+
+### RF-033 Cerrar sesión
+
+El sistema debe permitir al usuario cerrar su sesión activa.
+
+### RF-034 Vincular cuentas por email compartido
+
+El sistema debe asociar automáticamente un inicio de sesión con Google a una cuenta existente de usuario/contraseña cuando ambos compartan la misma dirección de email.
+
+### RF-035 Detectar idioma del navegador
+
+El sistema debe determinar el idioma de la interfaz a partir del idioma configurado en el navegador del usuario, utilizando español como idioma por defecto cuando el navegador esté configurado en un idioma no soportado.
+
+### RF-036 Solicitar reseteo de contraseña
+
+El sistema debe permitir a un usuario solicitar el reseteo de su contraseña ingresando el email asociado a su cuenta, y enviar a ese email un enlace de reseteo de un solo uso.
+
+### RF-037 Establecer nueva contraseña
+
+El sistema debe permitir al usuario establecer una nueva contraseña utilizando un enlace de reseteo válido.
+
+### RF-038 Expirar enlace de reseteo por tiempo
+
+El sistema debe invalidar el enlace de reseteo de contraseña transcurrida 1 hora desde su generación.
+
+### RF-039 Invalidar enlace de reseteo tras su uso
+
+El sistema debe invalidar el enlace de reseteo de contraseña inmediatamente después de haber sido utilizado.
+
+### RF-040 Registrar cuenta con usuario y contraseña
+
+El sistema debe permitir crear una cuenta nueva ingresando un nombre de usuario, contraseña y email.
 
 ---
 
@@ -162,7 +222,7 @@ La aplicación debe mantener una disponibilidad mensual mínima del 99%.
 
 ### RNF-003 Tamaño máximo de imagen
 
-La aplicación debe aceptar imágenes de hasta 10 MB.
+La aplicación debe aceptar imágenes de hasta 10 MB en formato JPEG, PNG o WebP.
 
 ### RNF-004 Precisión geográfica
 
@@ -170,7 +230,19 @@ La ubicación registrada debe tener una precisión igual o mejor a 50 metros cua
 
 ### RNF-005 Internacionalización
 
-La aplicación debe soportar los idiomas español, inglés y portugués, pero por defecto se usa español.
+La aplicación debe soportar español, inglés y portugués, con el 100% de los textos de la interfaz traducidos en los tres idiomas. El idioma se selecciona automáticamente según el navegador del usuario (RF-035), usando español como idioma por defecto.
+
+### RNF-006 Seguridad de autenticación
+
+El sistema debe almacenar las contraseñas de los usuarios mediante un algoritmo de hashing (nunca en texto plano), servir la aplicación exclusivamente sobre HTTPS, expirar la sesión del usuario a los 7 días de haber iniciado sesión, y exigir que las contraseñas tengan al menos 8 caracteres incluyendo letras y números.
+
+### RNF-007 Instalabilidad y comportamiento offline
+
+La aplicación debe ser instalable como PWA y debe mostrar la interfaz base (shell) en menos de 2 segundos cuando el usuario no tiene conexión a internet, usando el cache del service worker, sin requerir acceso a datos de murales.
+
+### RNF-008 Accesibilidad
+
+La aplicación debe cumplir con el nivel AA de las pautas WCAG 2.1.
 
 ---
 
@@ -190,13 +262,13 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ### AC-03 (RF-003): Ingreso manual exitoso
 
-**Dado** que el usuario se encuentra registrando un mural / **Cuando** ingresa manualmente una dirección o coordenadas válidas / **Entonces** el sistema debe asociar esa ubicación al mural
+**Dado** que el usuario se encuentra registrando un mural / **Cuando** ingresa manualmente coordenadas de latitud y longitud válidas / **Entonces** el sistema debe asociar esa ubicación al mural
 
 ---
 
 ### AC-04 (RF-004): Registro exitoso
 
-**Dado** que existe una fotografía válida y una ubicación válida / **Cuando** el usuario presiona "Guardar" / **Entonces** el mural debe almacenarse en la base de datos para quedar disponible en búsquedas posteriores
+**Dado** que existe una fotografía válida y una ubicación válida / **Cuando** el usuario presiona "Guardar" / **Entonces** el sistema debe almacenar el mural con su fotografía, ubicación, fecha de creación y estado inicial "pendiente" en la base de datos
 
 ---
 
@@ -232,7 +304,7 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ### AC-10 (RF-010): Rechazo de imagen inválida
 
-**Dado** que el usuario intenta subir una imagen / **Cuando** el archivo supera los 10 MB o tiene un formato no soportado / **Entonces** el sistema debe rechazar la imagen
+**Dado** que el usuario intenta subir una imagen / **Cuando** el archivo supera los 10 MB o no está en formato JPEG, PNG o WebP / **Entonces** el sistema debe rechazar la imagen
 
 ---
 
@@ -262,7 +334,7 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ### AC-15 (RF-015): Imagen bloqueada por contenido NSFW
 
-**Dado** que un usuario sube una fotografía / **Cuando** la validación automática detecta contenido NSFW / **Entonces** el sistema debe bloquear la publicación de la imagen y notificar al usuario que el contenido fue rechazado
+**Dado** que un usuario sube una fotografía / **Cuando** la validación automática detecta contenido NSFW / **Entonces** el sistema debe cambiar el mural al estado "rechazado", impedir su publicación y notificar al usuario que el contenido fue rechazado
 
 ---
 
@@ -310,11 +382,11 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ### AC-23 (RF-023): Login con Google
 
-**Dado** que el usuario tiene una cuenta de Google / **Cuando** selecciona la opción de iniciar sesión con Google y otorga los permisos requeridos / **Entonces** el sistema debe autenticarlo mediante OAuth 2.0 y permitirle acceder a la aplicación
+**Dado** que el usuario tiene una cuenta de Google / **Cuando** selecciona la opción de iniciar sesión con Google y otorga los permisos requeridos / **Entonces** el sistema debe autenticarlo y permitirle acceder a la aplicación
 
 ---
 
-### AC-24 (RF-013): Control de acceso a aprobación de murales
+### AC-24 (RF-025): Control de acceso a aprobación de murales
 
 **Dado** que existe un mural en estado "pendiente" / **Cuando** un usuario sin rol de administrador intenta cambiar su estado a "publicado" / **Entonces** el sistema debe rechazar la acción y mantener el mural en estado "pendiente"
 
@@ -328,7 +400,7 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ### AC-26 (RF-025): Aprobación de mural por administrador
 
-**Dado** que existe un mural en estado "pendiente" / **Cuando** un usuario administrador lo aprueba mediante un endpoint directo / **Entonces** el sistema debe cambiar su estado a "publicado"
+**Dado** que existe un mural en estado "pendiente" / **Cuando** un usuario administrador lo aprueba / **Entonces** el sistema debe cambiar su estado a "publicado"
 
 ---
 
@@ -338,16 +410,168 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 
 ---
 
+### AC-28 (RF-027): Rechazo de mural pendiente por administrador
+
+**Dado** que existe un mural en estado "pendiente" / **Cuando** un usuario administrador lo rechaza / **Entonces** el sistema debe cambiar su estado a "rechazado"
+
+---
+
+### AC-29 (RF-027): Control de acceso a rechazo de murales
+
+**Dado** que existe un mural en estado "pendiente" / **Cuando** un usuario sin rol de administrador intenta cambiar su estado a "rechazado" / **Entonces** el sistema debe rechazar la acción y mantener el mural en estado "pendiente"
+
+---
+
+### AC-30 (RF-028): Despublicación de mural reportado
+
+**Dado** que existe un mural publicado con al menos un reporte / **Cuando** un usuario administrador lo despublica / **Entonces** el sistema debe cambiar su estado a "rechazado" y dejar de mostrarlo en el mapa y las búsquedas públicas
+
+---
+
+### AC-31 (RF-029): Listado de murales pendientes
+
+**Dado** que existen murales en estado "pendiente" / **Cuando** un usuario administrador solicita el listado de murales pendientes / **Entonces** el sistema debe devolver todos los murales en ese estado
+
+---
+
+### AC-32 (RF-030): Listado de murales reportados
+
+**Dado** que existen murales publicados con al menos un reporte / **Cuando** un usuario administrador solicita el listado de murales reportados / **Entonces** el sistema debe devolver todos los murales con al menos un reporte activo
+
+---
+
+### AC-33 (RF-031): Ver murales propios
+
+**Dado** que un usuario colaborador subió al menos un mural / **Cuando** accede a la sección "mis murales" / **Entonces** el sistema debe mostrar todos los murales que subió junto con su estado actual (pendiente, publicado o rechazado)
+
+---
+
+### AC-34 (RF-031): Aislamiento de datos entre usuarios en "mis murales"
+
+**Dado** que un usuario colaborador tiene murales en estado "pendiente" o "rechazado" / **Cuando** un usuario distinto accede a la sección "mis murales" / **Entonces** el sistema no debe mostrarle los murales pendientes ni rechazados del primer usuario
+
+---
+
+### AC-35 (RF-032): Eliminación de mural propio
+
+**Dado** que un usuario colaborador es dueño de un mural / **Cuando** lo elimina / **Entonces** el sistema debe quitarlo de las búsquedas, el mapa y de "mis murales"
+
+---
+
+### AC-36 (RF-032): Control de acceso a eliminación de murales
+
+**Dado** que existe un mural subido por un usuario / **Cuando** un usuario distinto al dueño intenta eliminarlo / **Entonces** el sistema debe rechazar la acción y mantener el mural sin cambios
+
+---
+
+### AC-37 (RF-033): Cierre de sesión
+
+**Dado** que un usuario tiene una sesión activa / **Cuando** cierra sesión / **Entonces** el sistema debe invalidar su sesión y requerir autenticación nuevamente para acceder a funcionalidades protegidas
+
+---
+
+### AC-38 (RF-034): Vinculación automática de cuentas
+
+**Dado** que existe una cuenta registrada con usuario/contraseña asociada a un email / **Cuando** esa misma persona inicia sesión con Google usando el mismo email / **Entonces** el sistema debe autenticarla en la cuenta existente sin crear una cuenta duplicada
+
+---
+
+### AC-39 (RF-035): Idioma por defecto ante idioma no soportado
+
+**Dado** que el navegador del usuario está configurado en un idioma distinto de español, inglés o portugués / **Cuando** el usuario accede a la aplicación / **Entonces** el sistema debe mostrar la interfaz en español
+
+---
+
+### AC-40 (RF-035): Idioma según navegador
+
+**Dado** que el navegador del usuario está configurado en inglés o portugués / **Cuando** el usuario accede a la aplicación / **Entonces** el sistema debe mostrar la interfaz en ese idioma
+
+---
+
+### AC-41 (RF-036): Solicitud de reseteo con email registrado
+
+**Dado** que el usuario ingresa un email asociado a una cuenta existente / **Cuando** solicita el reseteo de contraseña / **Entonces** el sistema debe enviar a ese email un enlace de reseteo de un solo uso
+
+---
+
+### AC-42 (RF-036): Confirmación uniforme ante email no registrado
+
+**Dado** que el usuario ingresa un email que no está asociado a ninguna cuenta / **Cuando** solicita el reseteo de contraseña / **Entonces** el sistema debe mostrar el mismo mensaje de confirmación que si el email existiera, sin enviar ningún enlace
+
+---
+
+### AC-43 (RF-037): Reseteo exitoso
+
+**Dado** que el usuario accede a un enlace de reseteo válido y no utilizado / **Cuando** ingresa una nueva contraseña / **Entonces** el sistema debe actualizar la contraseña de la cuenta y permitir el login con la nueva contraseña
+
+---
+
+### AC-44 (RF-038): Enlace expirado por tiempo
+
+**Dado** que el usuario accede a un enlace de reseteo generado hace más de 1 hora / **Cuando** intenta establecer una nueva contraseña / **Entonces** el sistema debe rechazar la operación e informar que el enlace expiró
+
+---
+
+### AC-45 (RF-039): Enlace inválido tras su uso
+
+**Dado** que un enlace de reseteo ya fue utilizado para establecer una nueva contraseña / **Cuando** el usuario intenta usar el mismo enlace nuevamente / **Entonces** el sistema debe rechazar la operación e informar que el enlace ya no es válido
+
+---
+
+### AC-46 (RF-040): Registro exitoso
+
+**Dado** que un visitante no tiene una cuenta / **Cuando** completa el registro con un nombre de usuario, contraseña y email no utilizados previamente / **Entonces** el sistema debe crear la cuenta y permitir iniciar sesión con esas credenciales
+
+---
+
+### AC-47 (RF-040): Rechazo por email duplicado
+
+**Dado** que ya existe una cuenta registrada con un email / **Cuando** un visitante intenta registrarse utilizando ese mismo email / **Entonces** el sistema debe rechazar el registro e informar que el email ya está en uso
+
+---
+
+### AC-48 (RF-040): Rechazo por nombre de usuario duplicado
+
+**Dado** que ya existe una cuenta registrada con un nombre de usuario / **Cuando** un visitante intenta registrarse utilizando ese mismo nombre de usuario / **Entonces** el sistema debe rechazar el registro e informar que el usuario ya está en uso
+
+---
+
+### AC-49 (RF-040): Rechazo por contraseña débil
+
+**Dado** que un visitante intenta registrarse / **Cuando** la contraseña ingresada tiene menos de 8 caracteres o no incluye letras y números / **Entonces** el sistema debe rechazar el registro e informar el motivo
+
+---
+
+### AC-50 (RF-028): Control de acceso a despublicación de murales
+
+**Dado** que existe un mural publicado con al menos un reporte / **Cuando** un usuario sin rol de administrador intenta cambiar su estado a "rechazado" / **Entonces** el sistema debe rechazar la acción y mantener el mural en estado "publicado"
+
+---
+
+### AC-51 (RF-029): Control de acceso a listado de murales pendientes
+
+**Dado** que existen murales en estado "pendiente" / **Cuando** un usuario sin rol de administrador solicita el listado de murales pendientes / **Entonces** el sistema debe rechazar la solicitud
+
+---
+
+### AC-52 (RF-030): Control de acceso a listado de murales reportados
+
+**Dado** que existen murales publicados con al menos un reporte / **Cuando** un usuario sin rol de administrador solicita el listado de murales reportados / **Entonces** el sistema debe rechazar la solicitud
+
+---
+
 ## Fuera de Alcance
 
 * Comentarios.
 * Likes.
 * Moderación humana con equipo dedicado / paneles de moderación avanzados.
-* Panel de administración para gestión centralizada de contenido.
+* Panel de administración para gestión centralizada de contenido (los listados de RF-029/RF-030 y las acciones de moderación se exponen sin interfaz de administración dedicada).
 * Perfiles sociales.
 * Seguimiento de usuarios.
 * Gamificación.
-* Posibilidad de que el usuario cambie el idioma de la interfaz
+* Posibilidad de que el usuario cambie el idioma de la interfaz manualmente (se detecta automáticamente según el navegador, RF-035).
+* Ingreso de ubicación manual mediante dirección/geocoding (solo se admiten coordenadas de latitud/longitud, RF-003).
+* Edición de un mural ya creado.
 
 ## Riesgos y Dependencias
 
@@ -365,7 +589,7 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 **Riesgo:** murales geolocalizados de forma errónea, dificultando su descubrimiento o generando confusión.
 
 **Mitigación:**
-* Uso de GPS como opción por defecto (mayor precisión) según RNF-004, con ingreso manual como alternativa (RF-003 / RF-009).
+* Uso de GPS como opción por defecto (mayor precisión) según RNF-004, con ingreso manual de coordenadas como alternativa (RF-003 / RF-009).
 * Confirmación visual en un mapa antes de guardar, para que el usuario valide el pin.
 * Posibilidad de reportar ubicación incorrecta como parte del flujo de reportes (RF-014).
 
@@ -376,5 +600,37 @@ La aplicación debe soportar los idiomas español, inglés y portugués, pero po
 **Mitigación:**
 * Validación automática básica de contenido NSFW antes de publicar (RF-015).
 * Estado "pendiente" para todo contenido nuevo hasta su validación (RF-013).
-* Sistema de reportes de usuarios para contenido ya publicado (RF-014).
+* Sistema de reportes de usuarios para contenido ya publicado (RF-014), con posibilidad de despublicación por parte de un administrador (RF-028).
+* Rechazo manual por parte de un administrador si la validación automática no detecta contenido inapropiado o falla (RF-027), apoyado en los listados de murales pendientes/reportados (RF-029/RF-030).
 * Definición de criterios claros de contenido aceptable, comunicados al usuario al momento de subir una foto.
+
+### Falsos positivos en validación NSFW
+
+**Riesgo:** murales legítimos rechazados automáticamente por error, generando frustración en el usuario colaborador.
+
+**Mitigación:**
+* El usuario puede ver que su mural fue rechazado a través de "mis murales" (RF-031), en vez de desaparecer silenciosamente.
+* No existe en el MVP un mecanismo de apelación; el usuario deberá volver a subir el mural si considera que fue un error (limitación aceptada para el MVP).
+
+### Dependencia de autenticación de Google
+
+**Riesgo:** indisponibilidad o cambios en la API de Google OAuth afectan el login (RF-023) y la vinculación automática de cuentas (RF-034).
+
+**Mitigación:**
+* La autenticación con usuario/contraseña (RF-022) queda disponible como vía alternativa independiente de Google.
+
+### Exposición por sesiones de larga duración
+
+**Riesgo:** una sesión válida por 7 días (RNF-006) aumenta la ventana de exposición si un dispositivo es robado o compartido.
+
+**Mitigación:**
+* Cierre de sesión explícito disponible para el usuario (RF-033).
+* Sesión servida exclusivamente sobre HTTPS y token no persistido en texto plano (RNF-006).
+
+### Dependencia de servicio de envío de emails (SendGrid)
+
+**Riesgo:** indisponibilidad o fallas en SendGrid impiden el envío del enlace de reseteo de contraseña (RF-036).
+
+**Mitigación:**
+* Reintento automático de envío ante fallos transitorios del servicio.
+* Mensaje de error visible al usuario si el envío no puede completarse.
